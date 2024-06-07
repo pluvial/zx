@@ -15,14 +15,9 @@
 // limitations under the License.
 
 import path from 'node:path'
-import fs from 'node:fs'
 import esbuild from 'esbuild'
-import { injectCode, injectFile } from 'esbuild-plugin-utils'
 import { nodeExternalsPlugin } from 'esbuild-node-externals'
 import { entryChunksPlugin } from 'esbuild-plugin-entry-chunks'
-import { hybridExportPlugin } from 'esbuild-plugin-hybrid-export'
-import { transformHookPlugin } from 'esbuild-plugin-transform-hook'
-import { extractHelpersPlugin } from 'esbuild-plugin-extract-helpers'
 import minimist from 'minimist'
 import glob from 'fast-glob'
 
@@ -34,26 +29,14 @@ const argv = minimist(process.argv.slice(2), {
     license: 'eof',
     minify: false,
     sourcemap: false,
-    format: 'cjs,esm',
     target: 'node12',
     cwd: process.cwd(),
   },
-  boolean: ['minify', 'sourcemap', 'hybrid'],
-  string: ['entry', 'external', 'bundle', 'license', 'format', 'map', 'cwd'],
+  boolean: ['minify', 'sourcemap'],
+  string: ['entry', 'external', 'bundle', 'license', 'map', 'cwd'],
 })
-const {
-  entry,
-  external,
-  bundle,
-  minify,
-  sourcemap,
-  license,
-  format,
-  hybrid,
-  cwd: _cwd,
-} = argv
+const { entry, external, bundle, minify, sourcemap, license, cwd: _cwd } = argv
 
-const formats = format.split(',')
 const plugins = []
 const cwd = Array.isArray(_cwd) ? _cwd[_cwd.length - 1] : _cwd
 const entries = entry.split(/,\s?/)
@@ -68,93 +51,13 @@ if (_bundle && entryPoints.length > 1) {
   plugins.push(entryChunksPlugin())
 }
 
+// https://github.com/evanw/esbuild/issues/619
+// https://github.com/pradel/esbuild-node-externals/pull/52
 if (bundle === 'src') {
-  // https://github.com/evanw/esbuild/issues/619
-  // https://github.com/pradel/esbuild-node-externals/pull/52
   plugins.push(nodeExternalsPlugin())
 }
 
-if (hybrid) {
-  plugins.push(
-    hybridExportPlugin({
-      loader: 'require',
-      to: 'build',
-      toExt: '.js',
-    })
-  )
-}
-
-plugins.push(
-  transformHookPlugin({
-    hooks: [
-      {
-        on: 'end',
-        if: !hybrid,
-        pattern: /\.js$/,
-        transform(contents) {
-          return injectCode(contents, `import { require } from './deno.js'`)
-        },
-      },
-      {
-        on: 'end',
-        pattern: entryPointsToRegexp(entryPoints),
-        transform(contents) {
-          const extras = [
-            // https://github.com/evanw/esbuild/issues/1633
-            contents.includes('import_meta')
-              ? './scripts/import-meta-url.polyfill.js'
-              : '',
-
-            //https://github.com/evanw/esbuild/issues/1921
-            // p.includes('vendor') ? './scripts/require.polyfill.js' : '',
-          ].filter(Boolean)
-          return injectFile(contents, ...extras)
-        },
-      },
-      {
-        on: 'end',
-        pattern: entryPointsToRegexp(entryPoints),
-        transform(contents) {
-          return contents
-            .toString()
-            .replaceAll('import.meta.url', 'import_meta_url')
-            .replaceAll('import_meta.url', 'import_meta_url')
-            .replaceAll('"node:', '"')
-            .replaceAll(
-              'require("stream/promises")',
-              'require("stream").promises'
-            )
-            .replaceAll('require("fs/promises")', 'require("fs").promises')
-            .replaceAll('}).prototype', '}).prototype || {}')
-            .replace(
-              /\/\/ Annotate the CommonJS export names for ESM import in node:/,
-              ($0) => `/* c8 ignore next 100 */\n${$0}`
-            )
-        },
-      },
-    ],
-  }),
-  extractHelpersPlugin({
-    cwd: 'build',
-    include: /\.cjs/,
-  }),
-  {
-    name: 'deno',
-    setup(build) {
-      build.onEnd(() =>
-        fs.copyFileSync('./scripts/deno.polyfill.js', './build/deno.js')
-      )
-    },
-  }
-)
-
-function entryPointsToRegexp(entryPoints) {
-  return new RegExp(
-    '(' + entryPoints.map((e) => path.parse(e).name).join('|') + ')\\.cjs$'
-  )
-}
-
-const esmConfig = {
+const config = {
   absWorkingDir: cwd,
   entryPoints,
   outdir: './build',
@@ -166,29 +69,13 @@ const esmConfig = {
   platform: 'node',
   target: 'esnext',
   format: 'esm',
-  outExtension: {
-    '.js': '.mjs',
-  },
   plugins,
   legalComments: license,
   tsconfig: './tsconfig.json',
 }
 
-const cjsConfig = {
-  ...esmConfig,
-  outdir: './build',
-  target: 'es6',
-  format: 'cjs',
-  outExtension: {
-    '.js': '.cjs',
-  },
-}
+console.log('esbuild config:', config)
 
-for (const format of formats) {
-  const config = format === 'cjs' ? cjsConfig : esmConfig
-  console.log('esbuild config:', config)
-
-  await esbuild.build(config).catch(() => process.exit(1))
-}
+await esbuild.build(config).catch(() => process.exit(1))
 
 process.exit(0)

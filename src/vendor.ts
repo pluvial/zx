@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { URL } from 'node:url'
 import {
   convertPathToPattern,
   globby,
@@ -29,12 +28,6 @@ import * as yaml from 'yaml'
 import * as _fs from 'fs-extra'
 
 export { exec, buildCmd } from 'zurk/spawn'
-
-import _createRequire from 'create-require'
-
-export const createRequire = _createRequire as unknown as (
-  filename: string | URL
-) => NodeRequire
 
 export const globbyModule = {
   convertPathToPattern,

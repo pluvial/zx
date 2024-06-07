@@ -18,4 +18,4 @@
 
 - zx version:  x.x.x
 - Platform: windows / macos / linux
-- Runtime: node / deno / bun
+- Runtime: node / bun

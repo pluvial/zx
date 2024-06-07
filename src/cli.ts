@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { createRequire } from 'node:module'
 import url from 'node:url'
 import {
   $,
@@ -27,7 +28,6 @@ import {
 } from './index.js'
 import { installDeps, parseDeps } from './deps.js'
 import { randomId } from './util.js'
-import { createRequire } from './vendor.js'
 
 isMain() &&
   main().catch((err) => {
