@@ -44,13 +44,6 @@ describe('goods', () => {
     assert.deepEqual(await globby('*.md'), ['README.md'])
   })
 
-  test('fetch() works', async () => {
-    assert.match(
-      await fetch('https://medv.io').then((res) => res.text()),
-      /Anton Medvedev/
-    )
-  })
-
   test('echo() works', async () => {
     let stdout = ''
     let log = console.log

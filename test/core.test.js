@@ -595,11 +595,6 @@ describe('core', () => {
     test('blob()', async () => {
       const o = new ProcessOutput(null, null, '', '', 'foo\n')
       assert.equal(await o.blob().text(), 'foo\n')
-
-      const { Blob } = globalThis
-      globalThis.Blob = undefined
-      assert.throws(() => o.blob(), /Blob is not supported/)
-      globalThis.Blob = Blob
     })
   })
 

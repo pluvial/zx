@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2021",
-    "lib": ["ES2021"],
-    "moduleResolution": "NodeNext",
-    "module": "NodeNext",
+    "target": "esnext",
+    "lib": ["esnext", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
     "strict": true,
     "outDir": "./build",
     "declaration": true,

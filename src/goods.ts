@@ -16,13 +16,7 @@ import assert from 'node:assert'
 import { createInterface } from 'node:readline'
 import { $, within, ProcessOutput } from './core.js'
 import { type Duration, isString, parseDuration } from './util.js'
-import {
-  chalk,
-  minimist,
-  nodeFetch,
-  RequestInfo,
-  RequestInit,
-} from './vendor.js'
+import { chalk, minimist } from './vendor.js'
 
 export { default as path } from 'node:path'
 export * as os from 'node:os'
@@ -41,7 +35,7 @@ export function sleep(duration: Duration) {
 
 export async function fetch(url: RequestInfo, init?: RequestInit) {
   $.log({ kind: 'fetch', url, init })
-  return nodeFetch(url, init)
+  return globalThis.fetch(url, init)
 }
 
 export function echo(...args: any[]): void

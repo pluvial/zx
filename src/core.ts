@@ -13,9 +13,14 @@
 // limitations under the License.
 
 import assert from 'node:assert'
-import { spawn, spawnSync, StdioOptions, IOType } from 'node:child_process'
+import {
+  spawn,
+  spawnSync,
+  type StdioOptions,
+  type IOType,
+} from 'node:child_process'
 import { type Encoding } from 'node:crypto'
-import { AsyncHook, AsyncLocalStorage, createHook } from 'node:async_hooks'
+import { type AsyncHook, AsyncLocalStorage, createHook } from 'node:async_hooks'
 import { Readable, Writable } from 'node:stream'
 import { inspect } from 'node:util'
 import { EOL } from 'node:os'
@@ -26,11 +31,9 @@ import {
   which,
   ps,
   type ChalkInstance,
-  RequestInfo,
-  RequestInit,
 } from './vendor.js'
 import {
-  Duration,
+  type Duration,
   errnoMessage,
   exitCodeInfo,
   formatCmd,
@@ -571,10 +574,6 @@ export class ProcessOutput extends Error {
   }
 
   blob(type = 'text/plain') {
-    if (!globalThis.Blob)
-      throw new Error(
-        'Blob is not supported in this environment. Provide a polyfill'
-      )
     return new Blob([this.buffer()], { type })
   }
 
