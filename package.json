@@ -57,6 +57,7 @@
   "scripts": {
     "fmt": "prettier --write .",
     "fmt:check": "prettier --check .",
+    "esbuild": "esbuild src/*.ts --bundle --platform=neutral --packages=external --outdir=build",
     "build": "pnpm build:js && pnpm build:dts",
     "build:check": "tsc",
     "build:js": "node scripts/build-js.mjs --entry=src/*.ts && pnpm build:vendor",

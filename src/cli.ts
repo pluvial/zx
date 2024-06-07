@@ -29,16 +29,6 @@ import {
 import { installDeps, parseDeps } from './deps.js'
 import { randomId } from './util.js'
 
-isMain() &&
-  main().catch((err) => {
-    if (err instanceof ProcessOutput) {
-      console.error('Error:', err.message)
-    } else {
-      console.error(err)
-    }
-    process.exitCode = 1
-  })
-
 export function printUsage() {
   // language=txt
   console.log(`
@@ -80,8 +70,10 @@ export const argv = minimist(process.argv.slice(2), {
   stopEarly: true,
 })
 
-export async function main() {
-  await import('./globals.js')
+import './globals.js'
+import { startRepl } from './repl.js'
+
+try {
   if (argv.cwd) $.cwd = argv.cwd
   if (argv.verbose) $.verbose = true
   if (argv.quiet) $.quiet = true
@@ -90,19 +82,19 @@ export async function main() {
   if (argv.postfix) $.postfix = argv.postfix
   if (argv.version) {
     console.log(getVersion())
-    return
+    throw null
   }
   if (argv.help) {
     printUsage()
-    return
+    throw null
   }
   if (argv.repl) {
-    await (await import('./repl.js')).startRepl()
-    return
+    await startRepl()
+    throw null
   }
   if (argv.eval) {
     await runScript(argv.eval)
-    return
+    throw null
   }
   const firstArg = argv._[0]
   updateArgv(argv._.slice(firstArg === undefined ? 0 : 1))
@@ -112,16 +104,25 @@ export async function main() {
       printUsage()
       process.exitCode = 1
     }
-    return
+    throw null
   }
   if (/^https?:/.test(firstArg)) {
     await scriptFromHttp(firstArg)
-    return
+    throw null
   }
   const filepath = firstArg.startsWith('file:///')
     ? url.fileURLToPath(firstArg)
     : path.resolve(firstArg)
   await importPath(filepath)
+} catch (err) {
+  if (err !== null) {
+    if (err instanceof ProcessOutput) {
+      console.error('Error:', err.message)
+    } else {
+      console.error(err)
+    }
+    process.exitCode = 1
+  }
 }
 
 export async function runScript(script: string) {
@@ -284,14 +285,4 @@ export function transformMarkdown(buf: Buffer) {
 
 export function getVersion(): string {
   return createRequire(import.meta.url)('../package.json').version
-}
-
-function isMain() {
-  if (import.meta.url.startsWith('file:')) {
-    const modulePath = url.fileURLToPath(import.meta.url).replace(/\.\w+$/, '')
-    const mainPath = fs.realpathSync(process.argv[1]).replace(/\.\w+$/, '')
-    return mainPath === modulePath
-  }
-
-  return false
 }
