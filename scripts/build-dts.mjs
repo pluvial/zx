@@ -29,7 +29,6 @@ const entry = {
       '@nodelib/fs.walk',
       'fast-glob',
       '@types/jsonfile',
-      'node-fetch-native',
       'chalk',
       'globby',
       '@types/minimist',
